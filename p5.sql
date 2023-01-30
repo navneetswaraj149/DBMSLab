@@ -1,0 +1,105 @@
+ CREATE TABLE DEPARTMENT
+     (DNO VARCHAR (20) PRIMARY KEY,
+      DNAME VARCHAR (20),
+      MGR_SSN VARCHAR (20),
+      MGR_START_DATE DATE);
+
+ insert into department values
+     ('1','accounts','11','2015-04-01'),
+     ('2','finance','22','2015-05-01'),
+     ('3','marketing','33','2015-06-01');
+
+CREATE TABLE EMPLOYEE
+      (SSN VARCHAR(20) PRIMARY KEY,
+      NAME VARCHAR(20),
+      ADDRESS VARCHAR(20),
+      SEX CHAR(1),
+      SALARY INTEGER,
+      SUPERSSN VARCHAR(20),
+      DNO VARCHAR(20));
+
+insert into employee values
+     ('11','ram','mysore','m',20000,'111','1'),
+     ('22','sita','bengaluru','f',30000,'222','2'),
+     ('33','shyam','tumkur','m',40000,'333','3');
+
+ ALTER TABLE DEPARTMENT
+      ADD FOREIGN KEY (MGR_SSN) REFERENCES EMPLOYEE(SSN);
+
+ ALTER TABLE EMPLOYEE
+      ADD FOREIGN KEY (DNO) REFERENCES DEPARTMENT (DNO);
+
+ CREATE TABLE DLOCATION
+      (DLOC VARCHAR(20),
+      DNO VARCHAR(20),
+      FOREIGN KEY (DNO) REFERENCES DEPARTMENT(DNO),
+      PRIMARY KEY (DNO, DLOC));
+
+ insert into dlocation values
+    ('bengaluru','1'),
+    ('mysore','2'),
+    ('tumkur','3');
+
+ CREATE TABLE PROJECT
+      (PNO INTEGER PRIMARY KEY  PNAME VARCHAR(20),
+      FOREIGN KEY (DNO) REFERENCES DEPARTMENT(DNO));
+
+ insert into project values
+ (100,'iot','mysuru','1'),
+ (101,'ml','mysuru','2'),
+ (102,'web','tumkur','3'),
+ (103,'ds','bengaluru','3');
+
+ CREATE TABLE WORKS_ON
+  (HOURS INTEGER,
+  SSN VARCHAR(20),
+  PNO INTEGER,
+  FOREIGN KEY (SSN) REFERENCES EMPLOYEE(SSN),
+  FOREIGN KEY (PNO) REFERENCES PROJECT(PNO),
+  PRIMARY KEY (SSN, PNO));
+
+
+mysql> insert into works_on values
+     (12,'11','100'),
+     (10,'22','101'),
+     (9,'33','102'),
+     (7,'22','100');
+
+ SELECT DISTINCT P.PNO
+      FROM PROJECT P, DEPARTMENT D, EMPLOYEE E
+      WHERE E.DNO=D.DNO
+      AND D.MGR_SSN=E.SSN
+      AND E.NAME LIKE '%sita'
+      UNION
+      SELECT DISTINCT P1.PNO
+  FROM PROJECT P1, WORKS_ON W, EMPLOYEE E1
+      WHERE P1.PNO=W.PNO
+      AND E1.SSN=W.SSN
+      AND E1.NAME LIKE '%sita';
+
+ SELECT E.NAME, 1.1*E.SALARY AS INCR_SAL
+      FROM EMPLOYEE E, WORKS_ON W, PROJECT P
+      WHERE E.SSN=W.SSN
+      AND W.PNO=P.PNO
+      AND P.PNAME='IOT';
+
+ SELECT SUM(E.SALARY), MAX(E.SALARY), MIN(E.SALARY), AVG(E.SALARY)
+      FROM EMPLOYEE E, DEPARTMENT D
+      WHERE E.DNO=D.DNO
+      AND D.DNAME='ACCOUNTS';
+
+ SELECT E.NAME
+      FROM EMPLOYEE E
+  WHERE NOT EXISTS(SELECT PNO FROM PROJECT WHERE DNO='1' AND PNO NOT IN (SELECT
+      PNO FROM WORKS_ON
+      WHERE E.SSN=SSN));
+
+ SELECT D.DNO, COUNT(*)
+      FROM DEPARTMENT D, EMPLOYEE E
+      WHERE D.DNO=E.DNO
+      AND E.SALARY > 10000
+      AND D.DNO IN (SELECT E1.DNO
+     FROM EMPLOYEE E1
+      GROUP BY E1.DNO
+      HAVING COUNT(*)>=1)
+      GROUP BY D.DNO;
